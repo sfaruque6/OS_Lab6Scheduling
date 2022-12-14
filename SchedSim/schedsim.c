@@ -5,74 +5,101 @@
 #include<stdlib.h>
 #include "process.h"
 #include "util.h"
+#include<stdbool.h>
 
 
 // Function to find the waiting time for all  
 // processes
 void findWaitingTimeRR(ProcessType plist[],int n ,int quantum) {
      //3. Initialize time : t = 0 
-     int i, t;
-  
-     //1. Create an array *rem_bt[]* to keep track of remaining burst time of processes. This array is initially a copy of *plist[].bt* (all processes burst times)
-     int rem_bt[n];
-      
-  
-     //2. Store waiting times of processes in plist[].wt. Initialize this array as 0.
-     for (i = 0; i < n; i++){
-       rem_bt[i] = plist[i].bt;
-       plist[i].wt = 0; 
-     }
-     
-     
-     //4. Keep traversing the all processes while all processes are not done. Do following for i'th process if it is not done yet. 
-     for(i = 0; i < n; i++){
-        if (rem_bt[i] > 0){
-          if (rem_bt[i] > quantum){ // - If rem_bt[i] > quantum
-            t = t + quantum; //   (i)  t = t + quantum
-            rem_bt[i] -= quantum; //   (ii) bt_rem[i] -= quantum;
-            } 
-          else{
-            t = t + rem_bt[i]; // (i)  t = t + bt_rem[i];
-            plist[i].wt = t - plist[i].bt; //   (ii) plist[i].wt = t - plist[i].bt
-            rem_bt[i] = 0; //   (iii) bt_rem[i] = 0; // This process is over 
-            }
-        }
+      int i, j, rem_bt[n];
+ int t = 0;
+ bool done;
 
-      }
+ for (i = 0; i < n; i++) {
+   rem_bt[i] = plist[i].bt;
+   plist[i].wt = 0;
+ }
+
+ while (1) {
+   done = true;
+   for (j = 0; j < n; j++) {
+     if (rem_bt[j] > 0) {
+       done = false;
+       if (rem_bt[j] > quantum) {
+         t += quantum;
+         rem_bt[j] -= quantum;
+       } else {
+         t += rem_bt[j];
+         plist[j].wt = t - plist[j].bt;
+         rem_bt[j] = 0;
+       }
+     }
+   }
+   if (done == true)
+     break;
+ }
 }
+
 
 
 // Function to find the waiting time for all  
 // processes 
 void findWaitingTimeSJF(ProcessType plist[], int n)
-{ 
-      
-    //  1 Traverse until all process gets completely executed.
+{
 
-    int i, min, pcounter, currtime, comptime = 0; 
-    int rem_bt[n];
-  
-    for(i = 0; i < n; i++){
-        rem_bt[i] = plist[i].bt;
-    }
-    while(pcounter < n){ // Find process with minimum remaining time at every single time lap.
-      for(i = 1; i < n; i++){
-        if (rem_bt[i] < rem_bt[min]){
-          min = i;
-        }
-      }  
-      rem_bt[min] -= 1; // Reduce its time by 1.
-  
-      if (rem_bt[min] == 0){ // Check if its remaining time becomes 0        
-        pcounter += 1; // Increment the counter of process completion.       
-        comptime = currtime + 1; // Completion time of *current process = current_time +1;      
-        plist[min].wt = comptime - plist[min].bt; // Calculate waiting time for each completed process. wt[i]= Completion time - arrival_time-burst_time
-        rem_bt[min] = 9999;
-      } 
-    currtime += 1;  // Increment time lap by one.
-    }
-     
-} 
+int rt[n];
+for (int i = 0; i < n; i++)
+   rt[i] = plist[i].bt;
+
+int complete = 0, t = 0, minm = INT_MAX;
+int shortest = 0, finish_time;
+int check = 0;
+
+
+while (complete != n) {
+
+   for (int j = 0; j < n; j++) {
+       if ((plist[j].art <= t) &&
+       (rt[j] < minm) && rt[j] > 0) {
+           minm = rt[j];
+           shortest = j;
+           check = 1;
+       }
+   }
+
+   if (check == 0) { 
+       t++;
+       continue;
+   }
+
+
+   rt[shortest]--;
+
+   minm = rt[shortest];
+   if (minm == 0)
+       minm = INT_MAX;
+
+
+   if (rt[shortest] == 0) {
+
+       complete++;
+       check = 0;
+
+
+       finish_time = t + 1;
+
+       plist[shortest].wt = finish_time -
+                   plist[shortest].bt -
+                   plist[shortest].art;
+
+       if (plist[shortest].wt < 0)
+           plist[shortest].wt = 0;
+   }
+   t++;
+}
+}
+
 
 // Function to find the waiting time for all  
 // processes 
